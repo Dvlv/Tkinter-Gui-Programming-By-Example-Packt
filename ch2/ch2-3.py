@@ -13,7 +13,8 @@ class Card:
     def get_file(self):
         return "assets/" + self.suit + self.value + ".png"
 
-    def get_back_file(self):
+	@classmethod
+    def get_back_file(cls):
         return "assets/back.png"
 
 
@@ -111,7 +112,7 @@ class GameScreen(tk.Tk):
         player_card_images = [card.get_file() for card in table_state['player_cards']]
         dealer_card_images = [card.get_file() for card in table_state['dealer_cards']]
         if hide_dealer:
-            dealer_card_images[0] = card.get_back_file()
+            dealer_card_images[0] = Card.get_back_file()
 
         self.game_screen.create_image((250, 400), image="assets/tabletop.png")
 
@@ -133,8 +134,10 @@ class GameScreen(tk.Tk):
         if table_state['has_winner']:
             if table_state['has_winner'] == 'p':
                 # create you win text
+                pass
             else:
                 # create dealer wins text
+                pass
 
     def hit(self):
         self.game_state.hit()
@@ -148,7 +151,7 @@ class GameScreen(tk.Tk):
 
 
 class GameState:
-    def __init__(self)
+    def __init__(self):
         self.deck = Deck()
         self.deck.shuffle
 
@@ -205,5 +208,5 @@ class GameState:
 
 
 if __name__ == "__main__":
-    g = Game()
+    g = GameScreen()
     g.mainloop()
