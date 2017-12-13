@@ -1,21 +1,27 @@
 import tkinter as tk
+import os
 import random
 from collections import namedtuple
+
+assets_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'assets/'))
 
 class Card:
     def __init__(self, suit, value):
         self.suit = suit
         self.value = value
+        self.img = tk.PhotoImage(file=assets_folder + '/' + self.suit + self.value + ".png")
 
     def __repr__(self):
         return " of ".join((self.value, self.suit))
 
     def get_file(self):
-        return "assets/" + self.suit + self.value + ".png"
+        return self.img
 
-	@classmethod
+    @classmethod
     def get_back_file(cls):
-        return "assets/back.png"
+        cls.back = tk.PhotoImage(file="/home/dvlv/Dropbox/packtbook/Code/assets/back.png")
+
+        return cls.back
 
 
 class Deck:
@@ -76,6 +82,7 @@ class Hand:
                 print(card)
             print("Value:", self.get_value())
 
+
 class GameScreen(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -83,7 +90,8 @@ class GameScreen(tk.Tk):
         self.geometry("800x640")
         self.resizable(False, False)
 
-        self.CARD_WIDTH_OFFSET = 300
+        self.CARD_ORIGINAL_POSITION = 100
+        self.CARD_WIDTH_OFFSET = 100
 
         self.PLAYER_CARD_HEIGHT = 300
         self.DEALER_CARD_HEIGHT = 100
@@ -106,6 +114,8 @@ class GameScreen(tk.Tk):
         self.bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
         self.game_screen.pack(side=tk.LEFT, anchor=tk.N)
 
+        self.display_table()
+
     def display_table(self, hide_dealer=True):
         table_state = self.game_state.get_table_state()
 
@@ -114,19 +124,22 @@ class GameScreen(tk.Tk):
         if hide_dealer:
             dealer_card_images[0] = Card.get_back_file()
 
-        self.game_screen.create_image((250, 400), image="assets/tabletop.png")
+        self.game_screen.delete("all")
+        self.tabletop_image = tk.PhotoImage(file="/home/dvlv/Dropbox/packtbook/Code/assets/tabletop.png")
 
-        for card_number, card_image in enumerate(self.player_card_images):
+        self.game_screen.create_image((400, 250), image=self.tabletop_image)
+
+        for card_number, card_image in enumerate(player_card_images):
             self.game_screen.create_image(
-                (self.CARD_WIDTH_OFFSET * card_number, self.PLAYER_CARD_HEIGHT),
+                (self.CARD_ORIGINAL_POSITION + self.CARD_WIDTH_OFFSET * card_number, self.PLAYER_CARD_HEIGHT),
                 image=card_image
             )
 
-        for card_number, card_image in enumerate(self.dealer_card_images):
+        for card_number, card_image in enumerate(dealer_card_images):
             self.game_screen.create_image(
-                (self.CARD_WIDTH_OFFSET * card_number, self.DEALER_CARD_HEIGHT),
+                (self.CARD_ORIGINAL_POSITION + self.CARD_WIDTH_OFFSET * card_number, self.DEALER_CARD_HEIGHT),
                 image=card_image
-            )
+           )
 
         # create text showing hand value somewhere
         self.game_screen.create_text(self.PLAYER_SCORE_TEXT_COORDS, text=self.game_state.player_score_as_text())
@@ -153,7 +166,7 @@ class GameScreen(tk.Tk):
 class GameState:
     def __init__(self):
         self.deck = Deck()
-        self.deck.shuffle
+        self.deck.shuffle()
 
         self.player_hand = Hand()
         self.dealer_hand = Hand(dealer=True)
@@ -178,7 +191,7 @@ class GameState:
             'player_cards': self.player_hand.cards,
             'dealer_cards': self.dealer_hand.cards,
             'player_value': self.player_hand.get_value(),
-            'winner': self.has_winner,
+            'has_winner': self.has_winner,
         }
 
         return table_state
@@ -208,5 +221,6 @@ class GameState:
 
 
 if __name__ == "__main__":
+    print(assets_folder)
     g = GameScreen()
     g.mainloop()
