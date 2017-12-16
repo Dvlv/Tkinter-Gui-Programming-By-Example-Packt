@@ -1,7 +1,6 @@
 import tkinter as tk
 import os
 import random
-from collections import namedtuple
 
 assets_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'assets/'))
 
@@ -19,7 +18,7 @@ class Card:
 
     @classmethod
     def get_back_file(cls):
-        cls.back = tk.PhotoImage(file="/home/dvlv/Dropbox/packtbook/Code/assets/back.png")
+        cls.back = tk.PhotoImage(file=assets_folder + "/back.png")
 
         return cls.back
 
@@ -67,21 +66,6 @@ class Hand:
         self.calculate_value()
         return self.value
 
-    def show(self):
-        if self.dealer:
-            return ["hidden"] + self.cards[1:]
-        else:
-            return self.cards
-
-    def display(self):
-        if self.dealer:
-            print("hidden")
-            print(self.cards[1])
-        else:
-            for card in self.cards:
-                print(card)
-            print("Value:", self.get_value())
-
 
 class GameScreen(tk.Tk):
     def __init__(self):
@@ -96,7 +80,8 @@ class GameScreen(tk.Tk):
         self.PLAYER_CARD_HEIGHT = 300
         self.DEALER_CARD_HEIGHT = 100
 
-        self.PLAYER_SCORE_TEXT_COORDS = (300, 50)
+        self.PLAYER_SCORE_TEXT_COORDS = (400, 450)
+        self.WINNER_TEXT_COORDS = (400, 250)
 
         self.game_state = GameState()
 
@@ -108,6 +93,9 @@ class GameScreen(tk.Tk):
         self.hit_button = tk.Button(self.bottom_frame, text="Hit", width=25, command=self.hit)
         self.stick_button = tk.Button(self.bottom_frame, text="Stick", width=25, command=self.stick)
 
+        self.play_again_button = tk.Button(self.bottom_frame, text="Play Again", width=25, command=self.play_again)
+        self.quit_button = tk.Button(self.bottom_frame, text="Quit", width=25, command=self.destroy)
+
         self.hit_button.pack(side=tk.LEFT, padx=(100, 200))
         self.stick_button.pack(side=tk.LEFT)
 
@@ -116,16 +104,17 @@ class GameScreen(tk.Tk):
 
         self.display_table()
 
-    def display_table(self, hide_dealer=True):
-        table_state = self.game_state.get_table_state()
+    def display_table(self, hide_dealer=True, table_state=None):
+        if not table_state:
+            table_state = self.game_state.get_table_state()
 
         player_card_images = [card.get_file() for card in table_state['player_cards']]
         dealer_card_images = [card.get_file() for card in table_state['dealer_cards']]
-        if hide_dealer:
+        if hide_dealer and not table_state['blackjack']:
             dealer_card_images[0] = Card.get_back_file()
 
         self.game_screen.delete("all")
-        self.tabletop_image = tk.PhotoImage(file="/home/dvlv/Dropbox/packtbook/Code/assets/tabletop.png")
+        self.tabletop_image = tk.PhotoImage(file=assets_folder + "/tabletop.png")
 
         self.game_screen.create_image((400, 250), image=self.tabletop_image)
 
@@ -142,26 +131,44 @@ class GameScreen(tk.Tk):
            )
 
         # create text showing hand value somewhere
-        self.game_screen.create_text(self.PLAYER_SCORE_TEXT_COORDS, text=self.game_state.player_score_as_text())
+        self.game_screen.create_text(self.PLAYER_SCORE_TEXT_COORDS, text=self.game_state.player_score_as_text(), font=(None, 20))
 
         if table_state['has_winner']:
             if table_state['has_winner'] == 'p':
-                # create you win text
-                pass
+                self.game_screen.create_text(self.WINNER_TEXT_COORDS, text="YOU WIN!", font=(None, 50))
+            elif table_state['has_winner'] == 'dp':
+                self.game_screen.create_text(self.WINNER_TEXT_COORDS, text="TIE!", font=(None, 50))
             else:
-                # create dealer wins text
-                pass
+                self.game_screen.create_text(self.WINNER_TEXT_COORDS, text="DEALER WINS!", font=(None, 50))
+
+            self.show_play_again_options()
+
+    def show_play_again_options(self):
+        self.hit_button.pack_forget()
+        self.stick_button.pack_forget()
+
+        self.play_again_button.pack(side=tk.LEFT, padx=(100, 200))
+        self.quit_button.pack(side=tk.LEFT)
+
+    def show_gameplay_buttons(self):
+        self.play_again_button.pack_forget()
+        self.quit_button.pack_forget()
+
+        self.hit_button.pack(side=tk.LEFT, padx=(100, 200))
+        self.stick_button.pack(side=tk.LEFT)
+
+    def play_again(self):
+        self.show_gameplay_buttons()
+        self.game_state = GameState()
+        self.display_table()
 
     def hit(self):
         self.game_state.hit()
         self.display_table()
 
     def stick(self):
-        self.game_state.calculate_final_state()
-        self.display_table()
-
-
-
+        table_state = self.game_state.calculate_final_state()
+        self.display_table(False, table_state)
 
 class GameState:
     def __init__(self):
@@ -181,17 +188,46 @@ class GameState:
         self.player_hand.add_card(self.deck.deal())
         if self.someone_has_blackjack() == 'p':
             self.has_winner = 'p'
-        if self.player_is_over():
+        if self.player_is_over() or self.someone_has_blackjack() == 'd':
             self.has_winner = 'd'
+        if self.someone_has_blackjack() == 'dp':
+            self.has_winner = 'dp'
 
         return self.has_winner
 
     def get_table_state(self):
+        blackjack = False
+        winner = self.has_winner
+        if not winner:
+            winner = self.someone_has_blackjack()
+            if winner:
+                blackjack = True
         table_state = {
             'player_cards': self.player_hand.cards,
             'dealer_cards': self.dealer_hand.cards,
             'player_value': self.player_hand.get_value(),
-            'has_winner': self.has_winner,
+            'has_winner': winner,
+            'blackjack': blackjack,
+        }
+
+        return table_state
+
+    def calculate_final_state(self):
+        player_hand_value = self.player_hand.get_value()
+        dealer_hand_value = self.dealer_hand.get_value()
+
+        if player_hand_value == dealer_hand_value:
+            winner = 'dp'
+        elif player_hand_value > dealer_hand_value:
+            winner = 'p'
+        else:
+            winner = 'd'
+
+        table_state = {
+            'player_cards': self.player_hand.cards,
+            'dealer_cards': self.dealer_hand.cards,
+            'player_value': self.player_hand.get_value(),
+            'has_winner': winner,
         }
 
         return table_state
@@ -208,7 +244,7 @@ class GameState:
             dealer = True
 
         if player and dealer:
-            return 'pb'
+            return 'dp'
         elif player:
             return 'p'
         elif dealer:
