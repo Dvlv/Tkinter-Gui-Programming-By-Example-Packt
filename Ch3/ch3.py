@@ -130,7 +130,6 @@ class GameScreen(tk.Tk):
                 image=card_image
            )
 
-        # create text showing hand value somewhere
         self.game_screen.create_text(self.PLAYER_SCORE_TEXT_COORDS, text=self.game_state.player_score_as_text(), font=(None, 20))
 
         if table_state['has_winner']:
@@ -188,10 +187,8 @@ class GameState:
         self.player_hand.add_card(self.deck.deal())
         if self.someone_has_blackjack() == 'p':
             self.has_winner = 'p'
-        if self.player_is_over() or self.someone_has_blackjack() == 'd':
+        if self.player_is_over():
             self.has_winner = 'd'
-        if self.someone_has_blackjack() == 'dp':
-            self.has_winner = 'dp'
 
         return self.has_winner
 
@@ -205,7 +202,6 @@ class GameState:
         table_state = {
             'player_cards': self.player_hand.cards,
             'dealer_cards': self.dealer_hand.cards,
-            'player_value': self.player_hand.get_value(),
             'has_winner': winner,
             'blackjack': blackjack,
         }
@@ -226,7 +222,6 @@ class GameState:
         table_state = {
             'player_cards': self.player_hand.cards,
             'dealer_cards': self.dealer_hand.cards,
-            'player_value': self.player_hand.get_value(),
             'has_winner': winner,
         }
 
@@ -257,6 +252,5 @@ class GameState:
 
 
 if __name__ == "__main__":
-    print(assets_folder)
-    g = GameScreen()
-    g.mainloop()
+    gs = GameScreen()
+    gs.mainloop()
