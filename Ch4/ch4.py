@@ -107,6 +107,26 @@ class GameScreen(tk.Canvas):
             self.cards_to_deal_positions[self.cards_to_deal_pointer],
             image=self.cards_to_deal_images[self.cards_to_deal_pointer]
         )
+        self.update()
+        print(self.cards_to_deal_positions[self.cards_to_deal_pointer])
+
+    def hit(self):
+        new_card = self.game_state.draw()
+        card_number = len(self.game_state.player.hand.cards)
+        image_pos = self.get_player_card_pos(card_number)
+
+        self.cards_to_deal_images.append(new_card.get_file())
+        self.cards_to_deal_positions.append(image_pos)
+
+        self.play_deal_animation()
+
+        while self.playing_animation:
+            self.master.update()
+
+        self.game_state.hit(new_card)
+
+    def get_player_card_pos(self, card_number):
+        return (self.CARD_ORIGINAL_POSITION + self.CARD_WIDTH_OFFSET * card_number, self.PLAYER_CARD_HEIGHT)
 
     def display_table(self, hide_dealer=True, table_state=None):
         if not table_state:
@@ -121,7 +141,7 @@ class GameScreen(tk.Canvas):
         self.cards_to_deal_positions = []
 
         for card_number, card_image in enumerate(player_card_images):
-            image_pos = (self.CARD_ORIGINAL_POSITION + self.CARD_WIDTH_OFFSET * card_number, self.PLAYER_CARD_HEIGHT)
+            image_pos = self.get_player_card_pos(card_number)
             self.cards_to_deal_images.append(card_image)
             self.cards_to_deal_positions.append(image_pos)
 
@@ -142,15 +162,13 @@ class GameScreen(tk.Canvas):
         self.create_text(self.POT_MONEY_COORDS, text=self.game_state.pot_money_as_text(),
                                      font=(None, 20))
 
-        if table_state['has_winner']:
-            if table_state['has_winner'] == 'p':
-                self.create_text(self.WINNER_TEXT_COORDS, text="YOU WIN!", font=(None, 50))
-            elif table_state['has_winner'] == 'dp':
-                self.create_text(self.WINNER_TEXT_COORDS, text="TIE!", font=(None, 50))
-            else:
-                self.create_text(self.WINNER_TEXT_COORDS, text="DEALER WINS!", font=(None, 50))
-
-            self.show_next_round_options()
+    def show_winner_text(self, winner):
+        if winner == 'p':
+            self.create_text(self.WINNER_TEXT_COORDS, text="YOU WIN!", font=(None, 50))
+        elif winner == 'dp':
+            self.create_text(self.WINNER_TEXT_COORDS, text="TIE!", font=(None, 50))
+        else:
+            self.create_text(self.WINNER_TEXT_COORDS, text="DEALER WINS!", font=(None, 50))
 
 
 class GameWindow(tk.Tk):
@@ -199,8 +217,7 @@ class GameWindow(tk.Tk):
         self.display_table()
 
     def hit(self):
-        self.game_state.hit()
-        self.display_table()
+        self.game_screen.hit()
 
     def stick(self):
         table_state = self.game_state.calculate_final_state()
@@ -214,11 +231,8 @@ class GameState:
         self.current_round = 1
         self.pot = 0
 
-        self.soundboard = SoundBoard()
-
         self.deck = Deck()
         self.deck.shuffle()
-        # self.soundboard.shuffle_sound.play()
 
         self.player = Player(player_name)
         self.dealer = Dealer()
@@ -259,21 +273,22 @@ class GameState:
     def assign_winnings(self, winner):
         if winner == 'p':
             self.player.add_winnings(self.pot)
-            print('player wins, reset pot')
             self.pot = 0
         elif winner == 'd':
             self.dealer.add_winnings(self.pot)
-            print('dealer wins, empty pot')
             self.pot = 0
 
-    def hit(self):
-        self.player.receive_card(self.deck.deal())
+    def hit(self, card):
+        self.player.receive_card(card)
         if self.player.has_blackjack:
             self.has_winner = 'p'
         elif self.player.is_over:
             self.has_winner = 'd'
 
         return self.has_winner
+
+    def draw(self):
+        return self.deck.deal()
 
     def get_table_state(self):
         blackjack = False
