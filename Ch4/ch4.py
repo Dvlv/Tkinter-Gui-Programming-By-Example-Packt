@@ -27,11 +27,16 @@ class GameScreen(tk.Canvas):
         self.WINNER_TEXT_COORDS = (400, 250)
 
         self.game_state = GameState("Player")
+        self.sound_board = SoundBoard()
 
         self.tabletop_image = tk.PhotoImage(file=assets_folder + "/tabletop.png")
         self.card_back_image = Card.get_back_file()
 
+        self.cards_to_deal_pointer = 0
+        self.frame = 0
+
     def setup_opening_animation(self):
+        self.sound_board.shuffle_sound.play()
         self.create_image((400, 250), image=self.tabletop_image)
 
         self.card_back_1 = self.create_image(self.DECK_COORDINATES, image=self.card_back_image)
@@ -39,8 +44,6 @@ class GameScreen(tk.Canvas):
 
         self.back_1_movement = ([10] * 6 + [-10] * 6) * 7
         self.back_2_movement = ([-10] * 6 + [10] * 6) * 7
-
-        self.frame = 0
 
         self.play_card_animation()
 
@@ -57,7 +60,8 @@ class GameScreen(tk.Canvas):
             self.frame = 0
             self.display_table()
 
-    def setup_deal_animation(self):
+    def play_deal_animation(self):
+        self.playing_animation = True
         self.animation_frames = 15
 
         self.card_back_2 = self.create_image(self.DECK_COORDINATES, image=self.card_back_image)
@@ -87,9 +91,16 @@ class GameScreen(tk.Canvas):
             self.frame = 0
             self.delete(self.card_back_2)
             self.show_card()
-            if self.cards_to_deal_pointer < len(self.cards_to_deal_images):
+            self.sound_board.place_sound.play()
+
+            if self.cards_to_deal_pointer < (len(self.cards_to_deal_images) - 1):
                 self.cards_to_deal_pointer += 1
-                self.setup_deal_animation()
+                self.play_deal_animation()
+            else:
+                self.cards_to_deal_pointer = 0
+                self.cards_to_deal_images = []
+                self.cards_to_deal_positions = []
+                self.playing_animation = False
 
     def show_card(self):
         self.create_image(
@@ -106,10 +117,6 @@ class GameScreen(tk.Canvas):
         if hide_dealer and not table_state['blackjack']:
             dealer_card_images[0] = Card.get_back_file()
 
-        # self.delete("all")
-
-        # self.create_image((400, 250), image=self.tabletop_image)
-
         self.cards_to_deal_images = []
         self.cards_to_deal_positions = []
 
@@ -123,16 +130,17 @@ class GameScreen(tk.Canvas):
             self.cards_to_deal_images.append(card_image)
             self.cards_to_deal_positions.append(image_pos)
 
-        self.cards_to_deal_pointer = 0
+        self.play_deal_animation()
 
-        self.setup_deal_animation()
+        while self.playing_animation:
+            self.master.update()
 
-        # self.create_text(self.PLAYER_SCORE_TEXT_COORDS, text=self.game_state.player_score_as_text(),
-        #                              font=(None, 20))
-        # self.create_text(self.PLAYER_MONEY_COORDS, text=self.game_state.player_money_as_text(),
-        #                              font=(None, 20))
-        # self.create_text(self.POT_MONEY_COORDS, text=self.game_state.pot_money_as_text(),
-        #                              font=(None, 20))
+        self.create_text(self.PLAYER_SCORE_TEXT_COORDS, text=self.game_state.player_score_as_text(),
+                                     font=(None, 20))
+        self.create_text(self.PLAYER_MONEY_COORDS, text=self.game_state.player_money_as_text(),
+                                     font=(None, 20))
+        self.create_text(self.POT_MONEY_COORDS, text=self.game_state.pot_money_as_text(),
+                                     font=(None, 20))
 
         if table_state['has_winner']:
             if table_state['has_winner'] == 'p':
@@ -210,7 +218,7 @@ class GameState:
 
         self.deck = Deck()
         self.deck.shuffle()
-        self.soundboard.shuffle_sound.play()
+        # self.soundboard.shuffle_sound.play()
 
         self.player = Player(player_name)
         self.dealer = Dealer()
