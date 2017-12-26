@@ -40,6 +40,9 @@ class GameScreen(tk.Canvas):
         self.cards_to_deal_pointer = 0
         self.frame = 0
 
+    def refresh(self):
+        self.game_state = GameState("player")
+
     def setup_opening_animation(self):
         self.sound_board.shuffle_sound.play()
         self.create_image((400, 250), image=self.tabletop_image)
@@ -114,6 +117,7 @@ class GameScreen(tk.Canvas):
         self.update()
 
     def hit(self):
+        self.master.remove_all_buttons()
         new_card = self.game_state.draw()
         card_number = len(self.game_state.player.hand.cards)
         image_pos = self.get_player_card_pos(card_number)
@@ -130,12 +134,26 @@ class GameScreen(tk.Canvas):
         self.update_text()
         self.check_for_winner()
 
+    def stick(self):
+        table_state = self.game_state.calculate_final_state()
+
+        self.show_dealers_cards(table_state)
+        self.show_winner_text(table_state['has_winner'])
+        self.master.on_winner()
+
+    def show_dealers_cards(self, table_state):
+        dealer_first_card = table_state['dealer_cards'][0].get_file()
+        self.create_image((self.CARD_ORIGINAL_POSITION, self.DEALER_CARD_HEIGHT), image=dealer_first_card)
+
     def check_for_winner(self):
         winner = self.game_state.check_for_winner()
 
         if winner:
+            self.show_dealers_cards(self.game_state.get_table_state())
             self.show_winner_text(winner)
             self.master.on_winner()
+        else:
+            self.master.show_gameplay_buttons()
 
     def get_player_card_pos(self, card_number):
         return (self.CARD_ORIGINAL_POSITION + self.CARD_WIDTH_OFFSET * card_number, self.PLAYER_CARD_HEIGHT)
@@ -169,13 +187,23 @@ class GameScreen(tk.Canvas):
 
         self.update_text()
 
-        self.check_for_winner()
+        if table_state['blackjack']:
+            self.master.show_next_round_options()
+            self.show_winner_text(table_state['has_winner'])
+        else:
+            self.master.show_gameplay_buttons()
+            self.check_for_winner()
 
     def next_round(self):
         self.delete(self.winner_text)
         self.winner_text = None
-        self.game_state.next_round()
-        self.display_table()
+        self.game_state.assign_winnings()
+        if self.game_state.player_can_place_bet():
+            self.game_state.next_round()
+            self.display_table()
+        else:
+            self.show_out_of_money_text()
+            self.master.on_game_over()
 
     def update_text(self):
         self.delete(self.player_money_text, self.player_score_text, self.pot_money_text)
@@ -183,7 +211,6 @@ class GameScreen(tk.Canvas):
         self.player_score_text = self.create_text(self.PLAYER_SCORE_TEXT_COORDS,
                                                   text=self.game_state.player_score_as_text(),
                                                   font=(None, 20))
-
         self.player_money_text = self.create_text(self.PLAYER_MONEY_COORDS, text=self.game_state.player_money_as_text(),
                                                   font=(None, 20))
         self.pot_money_text = self.create_text(self.POT_MONEY_COORDS, text=self.game_state.pot_money_as_text(),
@@ -196,6 +223,9 @@ class GameScreen(tk.Canvas):
             self.winner_text = self.create_text(self.WINNER_TEXT_COORDS, text="TIE!", font=(None, 50))
         else:
             self.winner_text = self.create_text(self.WINNER_TEXT_COORDS, text="DEALER WINS!", font=(None, 50))
+
+    def show_out_of_money_text(self):
+        self.winner_text = self.create_text(self.WINNER_TEXT_COORDS, text="Out Of Money - Game Over", font=(None, 50))
 
 
 class GameWindow(tk.Tk):
@@ -216,8 +246,7 @@ class GameWindow(tk.Tk):
         self.next_round_button = tk.Button(self.bottom_frame, text="Next Round", width=25, command=self.next_round)
         self.quit_button = tk.Button(self.bottom_frame, text="Quit", width=25, command=self.destroy)
 
-        self.hit_button.pack(side=tk.LEFT, padx=(100, 200))
-        self.stick_button.pack(side=tk.LEFT)
+        self.new_game_button = tk.Button(self.bottom_frame, text="New Game", width=25, command=self.new_game)
 
         self.bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
         self.game_screen.pack(side=tk.LEFT, anchor=tk.N)
@@ -226,6 +255,26 @@ class GameWindow(tk.Tk):
 
     def on_winner(self):
         self.show_next_round_options()
+
+    def on_game_over(self):
+        self.hit_button.pack_forget()
+        self.stick_button.pack_forget()
+        self.new_game_button.pack(side=tk.LEFT, padx=(100, 200))
+        self.quit_button.pack(side=tk.LEFT)
+
+    def new_game(self):
+        self.game_screen.refresh()
+        self.game_screen.setup_opening_animation()
+        self.remove_all_buttons()
+
+    def remove_all_buttons(self):
+        self.new_game_button.pack_forget()
+        self.quit_button.pack_forget()
+
+        self.hit_button.pack_forget()
+        self.stick_button.pack_forget()
+
+        self.next_round_button.pack_forget()
 
     def show_next_round_options(self):
         self.hit_button.pack_forget()
@@ -242,15 +291,14 @@ class GameWindow(tk.Tk):
         self.stick_button.pack(side=tk.LEFT)
 
     def next_round(self):
-        self.show_gameplay_buttons()
+        self.remove_all_buttons()
         self.game_screen.next_round()
 
     def hit(self):
         self.game_screen.hit()
 
     def stick(self):
-        table_state = self.game_state.calculate_final_state()
-        self.display_table(False, table_state)
+        self.game_screen.stick()
 
 
 class GameState:
@@ -275,17 +323,14 @@ class GameState:
             self.player.receive_card(self.deck.deal())
             self.dealer.receive_card(self.deck.deal())
 
-        if self.player.can_place_bet(self.minimum_bet):
-            self.player.place_bet(self.minimum_bet)
-            self.dealer.place_bet(self.minimum_bet)
-            self.add_bet(self.minimum_bet * 2)
-        else:
-            # player is out - game over
-            pass
+        self.player.place_bet(self.minimum_bet)
+        self.dealer.place_bet(self.minimum_bet)
+        self.add_bet(self.minimum_bet * 2)
+
+    def player_can_place_bet(self):
+        return self.player.can_place_bet(self.minimum_bet)
 
     def next_round(self):
-        self.assign_winnings(self.has_winner)
-
         self.current_round += 1
         self.minimum_bet = self.BASE_BET * self.current_round
 
@@ -297,7 +342,8 @@ class GameState:
     def add_bet(self, amount):
         self.pot += amount
 
-    def assign_winnings(self, winner):
+    def assign_winnings(self):
+        winner = self.has_winner
         if winner == 'p':
             self.player.add_winnings(self.pot)
             self.pot = 0
