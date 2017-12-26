@@ -26,7 +26,7 @@ class GameScreen(tk.Canvas):
         self.POT_MONEY_COORDS = (500, 100)
         self.WINNER_TEXT_COORDS = (400, 250)
 
-        self.game_state = GameState("Player")
+        self.game_state = GameState()
         self.sound_board = SoundBoard()
 
         self.tabletop_image = tk.PhotoImage(file=assets_folder + "/tabletop.png")
@@ -41,7 +41,7 @@ class GameScreen(tk.Canvas):
         self.frame = 0
 
     def refresh(self):
-        self.game_state = GameState("player")
+        self.game_state = GameState()
 
     def setup_opening_animation(self):
         self.sound_board.shuffle_sound.play()
@@ -185,6 +185,7 @@ class GameScreen(tk.Canvas):
         while self.playing_animation:
             self.master.update()
 
+        self.sound_board.chip_sound.play()
         self.update_text()
 
         if table_state['blackjack']:
@@ -302,7 +303,7 @@ class GameWindow(tk.Tk):
 
 
 class GameState:
-    def __init__(self, player_name):
+    def __init__(self):
         self.BASE_BET = 5
         self.minimum_bet = self.BASE_BET
         self.current_round = 1
@@ -311,7 +312,7 @@ class GameState:
         self.deck = Deck()
         self.deck.shuffle()
 
-        self.player = Player(player_name)
+        self.player = Player()
         self.dealer = Dealer()
 
         self.begin_round()
@@ -348,7 +349,6 @@ class GameState:
             self.player.add_winnings(self.pot)
             self.pot = 0
         elif winner == 'd':
-            self.dealer.add_winnings(self.pot)
             self.pot = 0
 
     def hit(self, card):

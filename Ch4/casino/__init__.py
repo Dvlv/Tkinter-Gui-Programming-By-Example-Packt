@@ -68,8 +68,7 @@ class Hand:
 
 
 class Player:
-    def __init__(self, name):
-        self.name = name
+    def __init__(self):
         self.money = 50
         self.hand = Hand()
 
@@ -107,4 +106,4 @@ class Player:
 
 class Dealer(Player):
     def __init__(self):
-        super().__init__("Dealer")
+        super().__init__()
