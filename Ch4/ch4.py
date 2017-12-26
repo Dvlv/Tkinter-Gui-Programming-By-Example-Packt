@@ -1,18 +1,19 @@
 import tkinter as tk
 import random
 
+from functools import partial
+
 from pygame import mixer
 
 from casino import Card, Deck, Player, Dealer, assets_folder
 from casino_sounds import SoundBoard
 
 
-class GameScreen(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("Blackjack")
-        self.geometry("800x640")
-        self.resizable(False, False)
+class GameScreen(tk.Canvas):
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs)
+
+        self.DECK_COORDINATES = (700, 100)
 
         self.CARD_ORIGINAL_POSITION = 100
         self.CARD_WIDTH_OFFSET = 100
@@ -27,9 +28,131 @@ class GameScreen(tk.Tk):
 
         self.game_state = GameState("Player")
 
-        self.game_screen = tk.Canvas(self, bg="white", width=800, height=500)
         self.tabletop_image = tk.PhotoImage(file=assets_folder + "/tabletop.png")
         self.card_back_image = Card.get_back_file()
+
+    def setup_opening_animation(self):
+        self.create_image((400, 250), image=self.tabletop_image)
+
+        self.card_back_1 = self.create_image(self.DECK_COORDINATES, image=self.card_back_image)
+        self.card_back_2 = self.create_image((self.DECK_COORDINATES[0] + 20, self.DECK_COORDINATES[1]), image=self.card_back_image)
+
+        self.back_1_movement = ([10] * 6 + [-10] * 6) * 7
+        self.back_2_movement = ([-10] * 6 + [10] * 6) * 7
+
+        self.frame = 0
+
+        self.play_card_animation()
+
+    def play_card_animation(self):
+        if self.frame < len(self.back_1_movement):
+            self.move(self.card_back_1, self.back_1_movement[self.frame], 0)
+            self.move(self.card_back_2, self.back_2_movement[self.frame], 0)
+            self.update()
+            self.frame += 1
+
+            self.after(33, self.play_card_animation)
+        else:
+            self.delete(self.card_back_2)
+            self.frame = 0
+            self.display_table()
+
+    def setup_deal_animation(self):
+        self.animation_frames = 15
+
+        self.card_back_2 = self.create_image(self.DECK_COORDINATES, image=self.card_back_image)
+        self.card_back_2_pos = self.DECK_COORDINATES
+
+        target_coords = self.cards_to_deal_positions[self.cards_to_deal_pointer]
+
+        x_diff = self.DECK_COORDINATES[0] - target_coords[0]
+        y_diff = self.DECK_COORDINATES[1] - target_coords[1]
+
+        x_step = (x_diff / self.animation_frames) * -1
+        y_step = (y_diff / self.animation_frames) * -1
+
+        self.move_func = partial(self.move_card, item=self.card_back_2, x_dist=x_step, y_dist=y_step)
+        self.move_func.__name__ = 'move_card'
+        print(x_step, y_step)
+
+        self.move_card(self.card_back_2, x_step, y_step)
+
+    def move_card(self, item, x_dist, y_dist):
+        self.move(item, x_dist, y_dist)
+        self.update()
+        self.frame += 1
+        if self.frame < self.animation_frames:
+            self.after(33, self.move_func)
+        else:
+            self.frame = 0
+            self.delete(self.card_back_2)
+            self.show_card()
+            if self.cards_to_deal_pointer < len(self.cards_to_deal_images):
+                self.cards_to_deal_pointer += 1
+                self.setup_deal_animation()
+
+    def show_card(self):
+        self.create_image(
+            self.cards_to_deal_positions[self.cards_to_deal_pointer],
+            image=self.cards_to_deal_images[self.cards_to_deal_pointer]
+        )
+
+    def display_table(self, hide_dealer=True, table_state=None):
+        if not table_state:
+            table_state = self.game_state.get_table_state()
+
+        player_card_images = [card.get_file() for card in table_state['player_cards']]
+        dealer_card_images = [card.get_file() for card in table_state['dealer_cards']]
+        if hide_dealer and not table_state['blackjack']:
+            dealer_card_images[0] = Card.get_back_file()
+
+        # self.delete("all")
+
+        # self.create_image((400, 250), image=self.tabletop_image)
+
+        self.cards_to_deal_images = []
+        self.cards_to_deal_positions = []
+
+        for card_number, card_image in enumerate(player_card_images):
+            image_pos = (self.CARD_ORIGINAL_POSITION + self.CARD_WIDTH_OFFSET * card_number, self.PLAYER_CARD_HEIGHT)
+            self.cards_to_deal_images.append(card_image)
+            self.cards_to_deal_positions.append(image_pos)
+
+        for card_number, card_image in enumerate(dealer_card_images):
+            image_pos = (self.CARD_ORIGINAL_POSITION + self.CARD_WIDTH_OFFSET * card_number, self.DEALER_CARD_HEIGHT)
+            self.cards_to_deal_images.append(card_image)
+            self.cards_to_deal_positions.append(image_pos)
+
+        self.cards_to_deal_pointer = 0
+
+        self.setup_deal_animation()
+
+        # self.create_text(self.PLAYER_SCORE_TEXT_COORDS, text=self.game_state.player_score_as_text(),
+        #                              font=(None, 20))
+        # self.create_text(self.PLAYER_MONEY_COORDS, text=self.game_state.player_money_as_text(),
+        #                              font=(None, 20))
+        # self.create_text(self.POT_MONEY_COORDS, text=self.game_state.pot_money_as_text(),
+        #                              font=(None, 20))
+
+        if table_state['has_winner']:
+            if table_state['has_winner'] == 'p':
+                self.create_text(self.WINNER_TEXT_COORDS, text="YOU WIN!", font=(None, 50))
+            elif table_state['has_winner'] == 'dp':
+                self.create_text(self.WINNER_TEXT_COORDS, text="TIE!", font=(None, 50))
+            else:
+                self.create_text(self.WINNER_TEXT_COORDS, text="DEALER WINS!", font=(None, 50))
+
+            self.show_next_round_options()
+
+
+class GameWindow(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Blackjack")
+        self.geometry("800x640")
+        self.resizable(False, False)
+
+        self.game_screen = GameScreen(self, bg="white", width=800, height=500)
 
         self.bottom_frame = tk.Frame(self, width=800, height=140, bg="red")
         self.bottom_frame.pack_propagate(0)
@@ -46,75 +169,7 @@ class GameScreen(tk.Tk):
         self.bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
         self.game_screen.pack(side=tk.LEFT, anchor=tk.N)
 
-        #self.display_table()
-        self.display_opening_animation()
-
-    def display_opening_animation(self):
-
-        self.game_screen.create_image((400, 250), image=self.tabletop_image)
-
-        self.card_back_1 = self.game_screen.create_image((700, 100), image=self.card_back_image)
-        self.card_back_2 = self.game_screen.create_image((720, 100), image=self.card_back_image)
-
-        self.back_1_movement = ([10] * 6 + [-10] * 6) * 7
-        self.back_2_movement = ([-10] * 6 + [10] * 6) * 7
-
-        self.frame = 0
-
-        self.play_card_animation()
-
-    def play_card_animation(self):
-        if self.frame < len(self.back_1_movement):
-            self.game_screen.move(self.card_back_1, self.back_1_movement[self.frame], 0)
-            self.game_screen.move(self.card_back_2, self.back_2_movement[self.frame], 0)
-            self.game_screen.update()
-            self.frame += 1
-    
-            self.after(33, self.play_card_animation)
-
-
-
-    def display_table(self, hide_dealer=True, table_state=None):
-        if not table_state:
-            table_state = self.game_state.get_table_state()
-
-        player_card_images = [card.get_file() for card in table_state['player_cards']]
-        dealer_card_images = [card.get_file() for card in table_state['dealer_cards']]
-        if hide_dealer and not table_state['blackjack']:
-            dealer_card_images[0] = Card.get_back_file()
-
-        self.game_screen.delete("all")
-
-        self.game_screen.create_image((400, 250), image=self.tabletop_image)
-
-        for card_number, card_image in enumerate(player_card_images):
-            self.game_screen.create_image(
-                (self.CARD_ORIGINAL_POSITION + self.CARD_WIDTH_OFFSET * card_number, self.PLAYER_CARD_HEIGHT),
-                image=card_image
-            )
-
-        for card_number, card_image in enumerate(dealer_card_images):
-            self.game_screen.create_image(
-                (self.CARD_ORIGINAL_POSITION + self.CARD_WIDTH_OFFSET * card_number, self.DEALER_CARD_HEIGHT),
-                image=card_image
-            )
-
-        self.game_screen.create_text(self.PLAYER_SCORE_TEXT_COORDS, text=self.game_state.player_score_as_text(),
-                                     font=(None, 20))
-        self.game_screen.create_text(self.PLAYER_MONEY_COORDS, text=self.game_state.player_money_as_text(),
-                                     font=(None, 20))
-        self.game_screen.create_text(self.POT_MONEY_COORDS, text=self.game_state.pot_money_as_text(),
-                                     font=(None, 20))
-
-        if table_state['has_winner']:
-            if table_state['has_winner'] == 'p':
-                self.game_screen.create_text(self.WINNER_TEXT_COORDS, text="YOU WIN!", font=(None, 50))
-            elif table_state['has_winner'] == 'dp':
-                self.game_screen.create_text(self.WINNER_TEXT_COORDS, text="TIE!", font=(None, 50))
-            else:
-                self.game_screen.create_text(self.WINNER_TEXT_COORDS, text="DEALER WINS!", font=(None, 50))
-
-            self.show_next_round_options()
+        self.game_screen.setup_opening_animation()
 
     def show_next_round_options(self):
         self.hit_button.pack_forget()
@@ -279,5 +334,5 @@ class GameState:
 
 
 if __name__ == "__main__":
-    gs = GameScreen()
-    gs.mainloop()
+    gw = GameWindow()
+    gw.mainloop()
