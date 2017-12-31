@@ -1,9 +1,6 @@
 import tkinter as tk
-import random
 
 from functools import partial
-
-from pygame import mixer
 
 from casino import Card, Deck, Player, Dealer, assets_folder
 from casino_sounds import SoundBoard
@@ -73,7 +70,6 @@ class GameScreen(tk.Canvas):
         self.animation_frames = 15
 
         self.card_back_2 = self.create_image(self.DECK_COORDINATES, image=self.card_back_image)
-        self.card_back_2_pos = self.DECK_COORDINATES
 
         target_coords = self.cards_to_deal_positions[self.cards_to_deal_pointer]
 
@@ -236,8 +232,6 @@ class GameWindow(tk.Tk):
         self.geometry("800x640")
         self.resizable(False, False)
 
-        self.game_screen = GameScreen(self, bg="white", width=800, height=500)
-
         self.bottom_frame = tk.Frame(self, width=800, height=140, bg="red")
         self.bottom_frame.pack_propagate(0)
 
@@ -250,8 +244,9 @@ class GameWindow(tk.Tk):
         self.new_game_button = tk.Button(self.bottom_frame, text="New Game", width=25, command=self.new_game)
 
         self.bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
-        self.game_screen.pack(side=tk.LEFT, anchor=tk.N)
 
+        self.game_screen = GameScreen(self, bg="white", width=800, height=500)
+        self.game_screen.pack(side=tk.LEFT, anchor=tk.N)
         self.game_screen.setup_opening_animation()
 
     def on_winner(self):
@@ -325,7 +320,6 @@ class GameState:
             self.dealer.receive_card(self.deck.deal())
 
         self.player.place_bet(self.minimum_bet)
-        self.dealer.place_bet(self.minimum_bet)
         self.add_bet(self.minimum_bet * 2)
 
     def player_can_place_bet(self):
