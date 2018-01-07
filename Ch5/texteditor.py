@@ -19,10 +19,24 @@ class MainWindow(tk.Tk):
         self.bind_events()
 
     def bind_events(self):
-        self.bind('')
+        self.text_area.bind("<MouseWheel>", self.scroll_text)
+        self.text_area.bind("<Button-4>", self.scroll_text)
+        self.text_area.bind("<Button-5>", self.scroll_text)
 
-    def scroll_text(self, command, value):
-        self.text_area.yview_moveto(value)
+    def scroll_text(self, *args):
+        try:
+            self.text_area.yview_moveto(args[1])
+        except IndexError:
+            event = args[0]
+            if event.delta:
+                move = -1 * (event.delta / 120)
+            else:
+                if event.num == 5:
+                    move = 1
+                else:
+                    move = -1
+
+            self.text_area.yview_scroll(int(move), "units")
 
 
 if __name__ == '__main__':
