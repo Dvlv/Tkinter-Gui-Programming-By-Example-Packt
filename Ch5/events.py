@@ -30,6 +30,8 @@ def on_ctrl_d(event=None):
 can.bind('<Button-1>', on_click)
 win.bind('<Control-d>', on_ctrl_d)
 win.bind('<KeyPress>', on_key_down)
+win.bind('<e>', lambda e, s=lab: lab.configure(font=(None, 18)))
+
 can.pack()
 lab.pack(side=tk.BOTTOM)
 
