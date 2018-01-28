@@ -42,15 +42,16 @@ class ColourChooser(tk.Toplevel):
         text_foreground_label = ttk.Label(text_foreground_frame, text="Foreground:", anchor=tk.E, style="editor.TLabel")
         text_background_label = ttk.Label(text_background_frame, text="Background:", anchor=tk.E, style="editor.TLabel")
 
-        foreground_colour_chooser = ttk.Button(window_foreground_frame, text="Change Foreground Colour", width=26,
+        foreground_colour_chooser = ttk.Button(window_foreground_frame, text="Change Foreground Colour", width=26, style="editor.TButton",
                                                command=lambda sv=self.chosen_foreground_colour: self.set_colour(sv))
         background_colour_chooser = ttk.Button(window_background_frame, text="Change Background Colour", width=26,
+                                               style="editor.TButton",
                                                command=lambda sv=self.chosen_background_colour: self.set_colour(sv))
         text_foreground_colour_chooser = ttk.Button(text_foreground_frame, text="Change Text Foreground Colour",
-                                                    width=26,
+                                                    width=26, style="editor.TButton",
                                                     command=lambda sv=self.chosen_text_foreground_colour: self.set_colour(sv))
         text_background_colour_chooser = ttk.Button(text_background_frame, text="Change Text Background Colour",
-                                                    width=26,
+                                                    width=26, style="editor.TButton",
                                                     command=lambda sv=self.chosen_text_background_colour: self.set_colour(sv))
 
         foreground_colour_preview = ttk.Label(window_foreground_frame, textvar=self.chosen_foreground_colour,
@@ -91,7 +92,7 @@ class ColourChooser(tk.Toplevel):
         text_background_colour_chooser.pack(side=tk.LEFT)
         text_background_colour_preview.pack(side=tk.LEFT, expand=1, fill=tk.X, padx=(15, 0))
 
-        save_button = ttk.Button(self, text="save", command=self.save)
+        save_button = ttk.Button(self, text="save", command=self.save, style="editor.TButton")
         save_button.pack(side=tk.BOTTOM, pady=(0, 20))
 
 
@@ -106,4 +107,12 @@ class ColourChooser(tk.Toplevel):
             frame.configure(bg=self.chosen_background_colour.get())
 
         self.configure(bg=self.chosen_background_colour.get())
-        # save to yaml file
+
+        yaml_file_contents = f"background: '{self.chosen_background_colour.get()}'\n" \
+                           + f"foreground: '{self.chosen_foreground_colour.get()}'\n" \
+                           + f"text_background: '{self.chosen_text_background_colour.get()}'\n" \
+                           + f"text_foreground: '{self.chosen_text_foreground_colour.get()}'\n"
+
+        with open("schemes/default.yaml", "w") as yaml_file:
+            yaml_file.write(yaml_file_contents)
+

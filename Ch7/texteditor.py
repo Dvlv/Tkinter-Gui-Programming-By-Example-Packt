@@ -11,13 +11,14 @@ from linenumbers import LineNumbers
 from highlighter import Highlighter
 from findwindow import FindWindow
 from colourchooser import ColourChooser
+from fontchooser import FontChooser
 
 
 class MainWindow(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        self.title('Python Text Editor v2')
+        self.title('Python Text Editor v3')
         self.geometry('800x600')
 
         self.foreground = 'black'
@@ -28,7 +29,12 @@ class MainWindow(tk.Tk):
         self.load_scheme_file('schemes/default.yaml')
         self.configure_ttk_elements()
 
-        self.text_area = TextArea(self, bg=self.text_background, fg=self.text_foreground, undo=True)
+        self.font_size = 15
+        self.font_family = "Ubuntu Mono"
+        self.load_font_file('schemes/font.yaml')
+
+        self.text_area = TextArea(self, bg=self.text_background, fg=self.text_foreground, undo=True,
+                                  font=(self.font_family, self.font_size))
 
         self.scrollbar = ttk.Scrollbar(orient="vertical", command=self.scroll_text)
         self.text_area.configure(yscrollcommand=self.scrollbar.set)
@@ -43,9 +49,11 @@ class MainWindow(tk.Tk):
         self.generate_sub_menus(sub_menu_items)
         self.configure(menu=self.menu)
 
-
-        self.right_click_menu = tk.Menu(self, bg="lightgrey", fg="black")
-        self.right_click_menu.add_command(label='paste')
+        self.right_click_menu = tk.Menu(self, bg=self.background, fg=self.foreground, tearoff=0)
+        self.right_click_menu.add_command(label='cut', command=self.edit_cut)
+        self.right_click_menu.add_command(label='copy', command=self.edit_copy)
+        self.right_click_menu.add_command(label='paste', command=self.edit_paste)
+        self.all_menus.append(self.right_click_menu)
 
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.line_numbers.pack(side=tk.LEFT, fill=tk.Y)
@@ -62,6 +70,15 @@ class MainWindow(tk.Tk):
         self.text_area.bind("<Button-3>", self.show_right_click_menu)
 
         self.bind('<Control-f>', self.show_find_window)
+
+        self.bind('<Control-n>', self.file_new)
+        self.bind('<Control-o>', self.file_open)
+        self.bind('<Control-s>', self.file_save)
+
+        self.bind('<Control-h>', self.help_about)
+
+        self.bind('<Control-m>', self.tools_change_syntax_highlighting)
+        self.bind('<Control-g>', self.tools_change_colour_scheme)
 
         self.line_numbers.bind("<MouseWheel>", lambda e: "break")
         self.line_numbers.bind("<Button-4>", lambda e: "break")
@@ -88,79 +105,9 @@ class MainWindow(tk.Tk):
         FindWindow(self.text_area)
 
     def show_right_click_menu(self, event):
-        print('a')
-        self.right_click_menu.post(event.x, event.y)  # TODO get these relative
-
-    def file_new(self):
-        """
-        Ctrl+N
-        """
-        pass
-
-    def file_open(self):
-        """
-        Ctrl+O
-        """
-        file_to_open = filedialog.askopenfilename()
-        if file_to_open:
-            self.open_file = file_to_open
-
-            self.text_area.display_file_contents(file_to_open)
-            self.highlighter.force_highlight()
-
-    def file_save(self):
-        """
-        Ctrl+S
-        """
-        pass
-
-    def edit_cut(self):
-        """
-        Ctrl+X
-        """
-        self.text_area.event_generate("<Control-x>")
-
-    def edit_paste(self):
-        """
-        Ctrl+V
-        """
-        self.text_area.event_generate("<Control-v>")
-
-    def edit_copy(self):
-        """
-        Ctrl+C
-        """
-        self.text_area.event_generate("<Control-c>")
-
-    def edit_select_all(self):
-        """
-        Ctrl+A
-        """
-        self.text_area.event_generate("<Control-a>")
-
-    def edit_find_and_replace(self):
-        """
-        Ctrl+F
-        """
-        self.show_find_window()
-
-    def help_about(self):
-        """
-        Ctrl+H
-        """
-        self.show_about_page()
-
-    def tools_change_syntax_highlighting(self):
-        """
-        Ctrl+M
-        """
-        self.load_syntax_highlighting_file()
-
-    def tools_change_colour_scheme(self):
-        """
-        Ctrl+G
-        """
-        self.change_colour_scheme()
+        x = self.winfo_x() + self.text_area.winfo_x() + event.x
+        y = self.winfo_y() + self.text_area.winfo_y() + event.y
+        self.right_click_menu.post(x, y)
 
     def generate_sub_menus(self, sub_menu_items):
         window_methods = [method_name for method_name in dir(self)
@@ -169,6 +116,7 @@ class MainWindow(tk.Tk):
                            if callable(getattr(tk.Tk, method_name))]
 
         my_methods = [method for method in set(window_methods) - set(tkinter_methods)]
+        my_methods = sorted(my_methods)
 
         for item in sub_menu_items:
             sub_menu = tk.Menu(self.menu, tearoff=0, bg=self.background, fg=self.foreground)
@@ -209,6 +157,17 @@ class MainWindow(tk.Tk):
         self.text_foreground = config['text_foreground']
         self.text_background = config['text_background']
 
+    def load_font_file(self, file_path):
+        with open(file_path, 'r') as stream:
+            try:
+                config = yaml.load(stream)
+            except yaml.YAMLError as error:
+                print(error)
+                return
+
+        self.font_family = config['family']
+        self.font_size = config['size']
+
     def change_colour_scheme(self):
         ColourChooser(self)
 
@@ -224,6 +183,105 @@ class MainWindow(tk.Tk):
         style = ttk.Style()
         style.configure('editor.TLabel', foreground=self.foreground, background=self.background)
         style.configure('editor.TButton', foreground=self.foreground, background=self.background)
+
+    def change_font(self):
+        FontChooser(self)
+
+    def update_font(self):
+        self.load_font_file('schemes/font.yaml')
+        self.text_area.configure(font=(self.font_family, self.font_size))
+
+    # =========== Menu Functions ==============
+
+    def file_new(self, event=None):
+        """
+        Ctrl+N
+        """
+        self.text_area.delete(1.0, tk.END)
+        self.open_file = None
+        self.line_numbers.force_update()
+
+    def file_open(self, event=None):
+        """
+        Ctrl+O
+        """
+        file_to_open = filedialog.askopenfilename()
+        if file_to_open:
+            self.open_file = file_to_open
+
+            self.text_area.display_file_contents(file_to_open)
+            self.highlighter.force_highlight()
+            self.line_numbers.force_update()
+
+    def file_save(self, event=None):
+        """
+        Ctrl+S
+        """
+        current_file = self.open_file if self.open_file else None
+        if not current_file:
+            current_file = filedialog.asksaveasfilename()
+
+        if current_file:
+            contents = self.text_area.get(1.0, tk.END)
+            with open(current_file, 'w') as file:
+                file.write(contents)
+
+    def edit_cut(self, event=None):
+        """
+        Ctrl+X
+        """
+        self.text_area.event_generate("<Control-x>")
+        self.line_numbers.force_update()
+
+    def edit_paste(self, event=None):
+        """
+        Ctrl+V
+        """
+        self.text_area.event_generate("<Control-v>")
+        self.line_numbers.force_update()
+        self.highlighter.force_highlight()
+
+    def edit_copy(self, event=None):
+        """
+        Ctrl+C
+        """
+        self.text_area.event_generate("<Control-c>")
+
+    def edit_select_all(self, event=None):
+        """
+        Ctrl+A
+        """
+        self.text_area.event_generate("<Control-a>")
+
+    def edit_find_and_replace(self, event=None):
+        """
+        Ctrl+F
+        """
+        self.show_find_window()
+
+    def help_about(self, event=None):
+        """
+        Ctrl+H
+        """
+        self.show_about_page()
+
+    def tools_change_syntax_highlighting(self, event=None):
+        """
+        Ctrl+M
+        """
+        self.load_syntax_highlighting_file()
+
+    def tools_change_colour_scheme(self, event=None):
+        """
+        Ctrl+G
+        """
+        self.change_colour_scheme()
+
+    def tools_change_font(self, event=None):
+        """
+        Ctrl+L
+        """
+        self.change_font()
 
 
 

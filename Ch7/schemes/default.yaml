@@ -1,4 +1,4 @@
-foreground: black
-background: skyblue
-text_foreground: black
-text_background: white
+background: '#cccccc'
+foreground: 'black'
+text_background: '#000000'
+text_foreground: '#ffffff'
