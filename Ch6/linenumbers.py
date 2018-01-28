@@ -21,3 +21,12 @@ class LineNumbers(tk.Text):
         self.delete(1.0, tk.END)
         self.insert(1.0, line_numbers_string)
         self.configure(state='disabled')
+
+
+if __name__ == '__main__':
+    w = tk.Tk()
+    t = tk.Text(w)
+    l = LineNumbers(w, t, width=1)
+    l.pack(side=tk.LEFT)
+    t.pack(side=tk.LEFT, expand=1)
+    w.mainloop()

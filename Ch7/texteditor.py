@@ -1,5 +1,8 @@
 import tkinter as tk
 import tkinter.ttk as ttk
+import tkinter.messagebox as msg
+
+import yaml
 
 from tkinter import filedialog
 
@@ -7,13 +10,25 @@ from textarea import TextArea
 from linenumbers import LineNumbers
 from highlighter import Highlighter
 from findwindow import FindWindow
+from colourchooser import ColourChooser
 
 
 class MainWindow(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        self.text_area = TextArea(self, bg="white", fg="black", undo=True)
+        self.title('Python Text Editor v2')
+        self.geometry('800x600')
+
+        self.foreground = 'black'
+        self.background = 'lightgrey'
+        self.text_foreground = 'black'
+        self.text_background='white'
+
+        self.load_scheme_file('schemes/default.yaml')
+        self.configure_ttk_elements()
+
+        self.text_area = TextArea(self, bg=self.text_background, fg=self.text_foreground, undo=True)
 
         self.scrollbar = ttk.Scrollbar(orient="vertical", command=self.scroll_text)
         self.text_area.configure(yscrollcommand=self.scrollbar.set)
@@ -21,10 +36,16 @@ class MainWindow(tk.Tk):
         self.line_numbers = LineNumbers(self, self.text_area, bg="grey", fg="white", width=1)
         self.highlighter = Highlighter(self.text_area, 'languages/python.yaml')
 
-        self.menu = tk.Menu(self, bg="lightgrey", fg="black")
+        self.menu = tk.Menu(self, bg=self.background, fg=self.foreground)
+        self.all_menus = [self.menu]
+
         sub_menu_items = ["file", "edit", "tools", "help"]
         self.generate_sub_menus(sub_menu_items)
         self.configure(menu=self.menu)
+
+
+        self.right_click_menu = tk.Menu(self, bg="lightgrey", fg="black")
+        self.right_click_menu.add_command(label='paste')
 
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.line_numbers.pack(side=tk.LEFT, fill=tk.Y)
@@ -38,6 +59,7 @@ class MainWindow(tk.Tk):
         self.text_area.bind("<MouseWheel>", self.scroll_text)
         self.text_area.bind("<Button-4>", self.scroll_text)
         self.text_area.bind("<Button-5>", self.scroll_text)
+        self.text_area.bind("<Button-3>", self.show_right_click_menu)
 
         self.bind('<Control-f>', self.show_find_window)
 
@@ -64,6 +86,10 @@ class MainWindow(tk.Tk):
 
     def show_find_window(self, event=None):
         FindWindow(self.text_area)
+
+    def show_right_click_menu(self, event):
+        print('a')
+        self.right_click_menu.post(event.x, event.y)  # TODO get these relative
 
     def file_new(self):
         """
@@ -145,7 +171,7 @@ class MainWindow(tk.Tk):
         my_methods = [method for method in set(window_methods) - set(tkinter_methods)]
 
         for item in sub_menu_items:
-            sub_menu = tk.Menu(self.menu, tearoff=0, bg="lightgrey", fg="black")
+            sub_menu = tk.Menu(self.menu, tearoff=0, bg=self.background, fg=self.foreground)
             matching_methods = []
             for method in my_methods:
                 if method.startswith(item):
@@ -158,15 +184,47 @@ class MainWindow(tk.Tk):
                 sub_menu.add_command(label=friendly_name.title(), command=actual_method, accelerator=method_shortcut)
 
             self.menu.add_cascade(label=item.title(), menu=sub_menu)
+            self.all_menus.append(sub_menu)
 
     def show_about_page(self):
-        pass
+        msg.showinfo("About", "My text editor, version 2, written in Python3.6 using tkinter!")
 
     def load_syntax_highlighting_file(self):
-        pass
+        syntax_file = filedialog.askopenfilename(filetypes=[("YAML file", ("*.yaml", "*.yml"))])
+        if syntax_file:
+            self.highlighter.clear_highlight()
+            self.highlighter = Highlighter(self.text_area, syntax_file)
+            self.highlighter.force_highlight()
+
+    def load_scheme_file(self, scheme):
+        with open(scheme, 'r') as stream:
+            try:
+                config = yaml.load(stream)
+            except yaml.YAMLError as error:
+                print(error)
+                return
+
+        self.foreground = config['foreground']
+        self.background = config['background']
+        self.text_foreground = config['text_foreground']
+        self.text_background = config['text_background']
 
     def change_colour_scheme(self):
-        pass
+        ColourChooser(self)
+
+    def apply_colour_scheme(self, foreground, background, text_foreground, text_background):
+        self.text_area.configure(fg=text_foreground, bg=text_background)
+        self.background = background
+        self.foreground = foreground
+        for menu in self.all_menus:
+            menu.configure(bg=self.background, fg=self.foreground)
+        self.configure_ttk_elements()
+
+    def configure_ttk_elements(self):
+        style = ttk.Style()
+        style.configure('editor.TLabel', foreground=self.foreground, background=self.background)
+        style.configure('editor.TButton', foreground=self.foreground, background=self.background)
+
 
 
 if __name__ == '__main__':

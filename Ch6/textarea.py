@@ -72,12 +72,12 @@ class TextArea(tk.Text):
 
     def replace_text(self, target, replacement):
         if self.find_match_index:
-            current_found_index_line = str(self.find_match_index).split('.')[0]
 
             end = f"{self.find_match_index}+{len(target)}c"
             self.replace(self.find_match_index, end, replacement)
 
-            self.find_search_starting_index = current_found_index_line + '.0'
+            self.find_search_starting_index = f"{self.find_match_index} linestart"
+            self.find_match_index = None
 
     def cancel_find(self):
         self.find_search_starting_index = 1.0
