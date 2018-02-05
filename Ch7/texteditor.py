@@ -50,9 +50,9 @@ class MainWindow(tk.Tk):
         self.configure(menu=self.menu)
 
         self.right_click_menu = tk.Menu(self, bg=self.background, fg=self.foreground, tearoff=0)
-        self.right_click_menu.add_command(label='cut', command=self.edit_cut)
-        self.right_click_menu.add_command(label='copy', command=self.edit_copy)
-        self.right_click_menu.add_command(label='paste', command=self.edit_paste)
+        self.right_click_menu.add_command(label='Cut', command=self.edit_cut)
+        self.right_click_menu.add_command(label='Copy', command=self.edit_copy)
+        self.right_click_menu.add_command(label='Paste', command=self.edit_paste)
         self.all_menus.append(self.right_click_menu)
 
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
@@ -99,7 +99,7 @@ class MainWindow(tk.Tk):
                     move = -1
 
             self.text_area.yview_scroll(int(move), "units")
-            self.line_numbers.yview_scroll(int(move), "units")
+            self.line_numbers.yview_scroll(int(move) * 3, "units")
 
     def show_find_window(self, event=None):
         FindWindow(self.text_area)
