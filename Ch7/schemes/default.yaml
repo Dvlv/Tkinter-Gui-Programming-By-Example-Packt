@@ -1,4 +1,4 @@
-background: '#cccccc'
-foreground: 'black'
-text_background: '#000000'
-text_foreground: '#ffffff'
+background: '#dddddd'
+foreground: '#000000'
+text_background: '#ffffff'
+text_foreground: '#000000'

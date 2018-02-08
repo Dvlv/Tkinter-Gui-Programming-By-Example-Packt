@@ -101,6 +101,14 @@ class ColourChooser(tk.Toplevel):
         sv.set(choice)
 
     def save(self):
+        yaml_file_contents = f"background: '{self.chosen_background_colour.get()}'\n" \
+                             + f"foreground: '{self.chosen_foreground_colour.get()}'\n" \
+                             + f"text_background: '{self.chosen_text_background_colour.get()}'\n" \
+                             + f"text_foreground: '{self.chosen_text_foreground_colour.get()}'\n"
+
+        with open("schemes/default.yaml", "w") as yaml_file:
+            yaml_file.write(yaml_file_contents)
+
         self.master.apply_colour_scheme(self.chosen_foreground_colour.get(), self.chosen_background_colour.get(),
                                         self.chosen_text_foreground_colour.get(), self.chosen_text_background_colour.get())
         for frame in self.all_frames:
@@ -108,11 +116,5 @@ class ColourChooser(tk.Toplevel):
 
         self.configure(bg=self.chosen_background_colour.get())
 
-        yaml_file_contents = f"background: '{self.chosen_background_colour.get()}'\n" \
-                           + f"foreground: '{self.chosen_foreground_colour.get()}'\n" \
-                           + f"text_background: '{self.chosen_text_background_colour.get()}'\n" \
-                           + f"text_foreground: '{self.chosen_text_foreground_colour.get()}'\n"
 
-        with open("schemes/default.yaml", "w") as yaml_file:
-            yaml_file.write(yaml_file_contents)
 

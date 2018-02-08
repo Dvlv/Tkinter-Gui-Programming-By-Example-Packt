@@ -79,6 +79,7 @@ class MainWindow(tk.Tk):
 
         self.bind('<Control-m>', self.tools_change_syntax_highlighting)
         self.bind('<Control-g>', self.tools_change_colour_scheme)
+        self.bind('<Control-l>', self.tools_change_font)
 
         self.line_numbers.bind("<MouseWheel>", lambda e: "break")
         self.line_numbers.bind("<Button-4>", lambda e: "break")
