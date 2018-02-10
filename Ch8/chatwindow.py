@@ -8,6 +8,7 @@ class ChatWindow(tk.Toplevel):
         self.master = master
         self.title(friend_name)
         self.geometry('540x640')
+        self.minsize(540,640)
 
         self.messages_area = tk.Canvas(self, bg="white")
 
@@ -28,7 +29,7 @@ class ChatWindow(tk.Toplevel):
         self.friend_profile_picture_area = tk.Label(self.right_frame, image=self.friend_profile_picture, relief=tk.RIDGE)
 
         self.messages_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
-        self.canvas_frame = self.messages_area.create_window((4, 4), window=self.left_frame, anchor="nw")
+        self.canvas_frame = self.messages_area.create_window((0, 0), window=self.left_frame, anchor="nw")
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         self.right_frame.pack(side=tk.LEFT, fill=tk.Y)
@@ -61,9 +62,14 @@ class ChatWindow(tk.Toplevel):
 
         return "break"
 
+    def receive_message(self, message):
+        label = ttk.Label(self.left_frame, text=message, anchor=tk.W, style="friend.TLabel")
+        label.pack(fill=tk.X)
+
     def configure_styles(self):
         style = ttk.Style()
         style.configure("me.TLabel", background='#efefef', foreground="black", padding=15)
+        style.configure("friend.TLabel", background='#ff6600', foreground="black", padding=15)
         style.configure("send.TButton", background='#dddddd', foreground="black", padding=16)
 
     def chat_width(self, event):
