@@ -7,7 +7,7 @@ class ChatWindow(tk.Toplevel):
         super().__init__(**kwargs)
         self.master = master
         self.title(friend_name)
-        self.geometry('520x640')
+        self.geometry('540x640')
 
         self.messages_area = tk.Canvas(self, bg="white")
 
@@ -22,7 +22,7 @@ class ChatWindow(tk.Toplevel):
         self.send_button = ttk.Button(self.bottom_frame, text="Send", command=self.send_message, style="send.TButton")
 
         self.profile_picture = tk.PhotoImage(file="images/avatar.png")
-        self.friend_profile_picture = tk.PhotoImage(friend_avatar)
+        self.friend_profile_picture = tk.PhotoImage(file=friend_avatar)
 
         self.profile_picture_area = tk.Label(self.right_frame, image=self.profile_picture, relief=tk.RIDGE)
         self.friend_profile_picture_area = tk.Label(self.right_frame, image=self.friend_profile_picture, relief=tk.RIDGE)
@@ -46,18 +46,25 @@ class ChatWindow(tk.Toplevel):
         self.bind('<Configure>', self.on_frame_resized)
         self.messages_area.bind('<Configure>', self.chat_width)
 
-    def send_message(self):
-        message = self.text_area.get(1.0, 'end-1c')
+        self.bind("<Return>", self.send_message)
+        self.text_area.bind("<Return>", self.send_message)
 
-        label = ttk.Label(self.left_frame, text=message, anchor=tk.W, style="me.TLabel")
-        label.pack(fill=tk.X)
+    def send_message(self, event=None):
+        message = self.text_area.get(1.0, tk.END).strip()
 
-        self.text_area.delete(1.0, tk.END)
+        if message:
+            message = "Me: " + message
+            label = ttk.Label(self.left_frame, text=message, anchor=tk.W, style="me.TLabel")
+            label.pack(fill=tk.X)
+
+            self.text_area.delete(1.0, tk.END)
+
+        return "break"
 
     def configure_styles(self):
         style = ttk.Style()
         style.configure("me.TLabel", background='#efefef', foreground="black", padding=15)
-        style.configure("send.TButton", background='#ff6600', foreground="black", padding=16)
+        style.configure("send.TButton", background='#dddddd', foreground="black", padding=16)
 
     def chat_width(self, event):
         canvas_width = event.width
@@ -70,4 +77,5 @@ class ChatWindow(tk.Toplevel):
 if __name__ == '__main__':
     w = tk.Tk()
     c = ChatWindow(w, 'b', 'images/avatar.png')
+    c.protocol("WM_DELETE_WINDOW", w.destroy)
     w.mainloop()
