@@ -1,6 +1,8 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 
+from smilieselect import SmilieSelect
+
 
 class ChatWindow(tk.Toplevel):
     def __init__(self, master, friend_name, friend_avatar, **kwargs):
@@ -9,7 +11,6 @@ class ChatWindow(tk.Toplevel):
         self.title(friend_name)
         self.geometry('540x640')
         self.minsize(540,640)
-
 
         self.right_frame = tk.Frame(self)
         self.left_frame = tk.Frame(self)
@@ -20,7 +21,11 @@ class ChatWindow(tk.Toplevel):
         self.messages_area.configure(yscrollcommand=self.scrollbar.set)
 
         self.text_area = tk.Text(self.bottom_frame, bg="white", fg="black", height=3, width=30)
+        self.text_area.smilies = []
         self.send_button = ttk.Button(self.bottom_frame, text="Send", command=self.send_message, style="send.TButton")
+
+        self.smilies_image = tk.PhotoImage(file="smilies/mikulka-smile-cool.png")
+        self.smilie_button = ttk.Button(self.bottom_frame, image=self.smilies_image, command=self.smilie_chooser, style="smilie.TButton")
 
         self.profile_picture = tk.PhotoImage(file="images/avatar.png")
         self.friend_profile_picture = tk.PhotoImage(file=friend_avatar)
@@ -39,6 +44,7 @@ class ChatWindow(tk.Toplevel):
         self.friend_profile_picture_area.pack(side=tk.TOP)
 
         self.bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
+        self.smilie_button.pack(side=tk.LEFT, pady=5)
         self.text_area.pack(side=tk.LEFT, fill=tk.X, expand=1, pady=5)
         self.send_button.pack(side=tk.RIGHT, pady=5)
 
@@ -51,41 +57,58 @@ class ChatWindow(tk.Toplevel):
         self.bind("<Return>", self.send_message)
         self.text_area.bind("<Return>", self.send_message)
 
-    def on_window_resized(self, event):
+        self.text_area.bind('<Control-s>', self.smilie_chooser)
 
+    def on_window_resized(self, event):
         if not self.left_frame.cget('width') == event.width - 2000:
             self.left_frame.configure(width=event.width - 2000)
+
         return "break"
 
     def send_message(self, event=None):
         message = self.text_area.get(1.0, tk.END)
 
-        if message:
+        if message.strip() or len(self.text_area.smilies):
             message = "Me: " + message
             self.messages_area.configure(state='normal')
             self.messages_area.insert(tk.END, message)
+
+            if len(self.text_area.smilies):
+                last_line_no = self.messages_area.index(tk.END)
+                last_line_no = str(last_line_no).split('.')[0]
+                last_line_no = str(int(last_line_no) - 2)
+
+                for index, file in self.text_area.smilies:
+                    char_index = str(index).split('.')[1]
+                    char_index = str(int(char_index) + 4)
+                    smilile_index = last_line_no + '.' + char_index
+                    self.messages_area.image_create(smilile_index, image=file)
+
+                self.text_area.smilies = []
+
             self.messages_area.configure(state='disabled')
 
             self.text_area.delete(1.0, tk.END)
 
         return "break"
 
+    def smilie_chooser(self, event=None):
+        SmilieSelect(self)
+
+    def add_smilie(self, smilie):
+        smilie_index = self.text_area.index(self.text_area.image_create(tk.END, image=smilie))
+        self.text_area.smilies.append((smilie_index, smilie))
+
     def receive_message(self, message):
-        label = ttk.Label(self.left_frame, text=message, anchor=tk.W, style="friend.TLabel")
-        label.pack(fill=tk.X)
+        self.messages_area.configure(state='normal')
+        self.messages_area.insert(tk.END, message)
+        self.messages_area.configure(state='disabled')
 
     def configure_styles(self):
         style = ttk.Style()
         style.configure("me.TLabel", background='#efefef', foreground="black", padding=15)
         style.configure("friend.TLabel", background='#ff6600', foreground="black", padding=15)
         style.configure("send.TButton", background='#dddddd', foreground="black", padding=16)
-
-    # def chat_width(self, event):
-    #     canvas_width = event.width
-    #     self.messages_area.itemconfig(self.canvas_frame, width=canvas_width)
-    #
-    # def on_frame_resized(self, event=None):
-    #     self.messages_area.configure(scrollregion=self.messages_area.bbox("all"))
 
 
 if __name__ == '__main__':

@@ -11,6 +11,15 @@ class FriendsList(tk.Tk):
         self.title('Tk Chat')
         self.geometry('700x500')
 
+        self.menu = tk.Menu(self, bg="lightgrey", fg="black", tearoff=0)
+
+        self.friends_menu = tk.Menu(self.menu, fg="black", bg="lightgrey", tearoff=0)
+        self.friends_menu.add_command(label="Add Friend", command=self.add_friend)
+
+        self.menu.add_cascade(label="Friends", menu=self.friends_menu)
+
+        self.configure(menu=self.menu)
+
         self.canvas = tk.Canvas(self, bg="white")
         self.canvas_frame = tk.Frame(self.canvas)
 
@@ -53,6 +62,9 @@ class FriendsList(tk.Tk):
         message_button.pack(side=tk.RIGHT)
 
         friend_frame.pack(fill=tk.X, expand=1)
+
+    def add_friend(self):
+        pass
 
     def open_chat_window(self):
         cw = ChatWindow(self, 'Jaden Corebyn', 'images/avatar.png')
