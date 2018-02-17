@@ -5,14 +5,13 @@ import tkinter.ttk as ttk
 
 
 class SmilieSelect(tk.Toplevel):
+    smilies_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'smilies/'))
+
     def __init__(self, master, **kwargs):
         super().__init__(**kwargs)
         self.master = master
         self.transient(master)
-
         self.position_window()
-
-        self.smilies_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'smilies/'))
 
         smilie_files = [file for file in os.listdir(self.smilies_dir) if file.endswith(".png")]
 
@@ -51,6 +50,7 @@ class SmilieSelect(tk.Toplevel):
     def insert_smilie(self, smilie):
         self.master.add_smilie(smilie)
         self.destroy()
+
 
 if __name__ == '__main__':
     w = tk.Tk()

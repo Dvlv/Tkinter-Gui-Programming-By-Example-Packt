@@ -1,3 +1,5 @@
+import os
+
 import tkinter as tk
 import tkinter.ttk as ttk
 
@@ -10,7 +12,7 @@ class ChatWindow(tk.Toplevel):
         self.master = master
         self.title(friend_name)
         self.geometry('540x640')
-        self.minsize(540,640)
+        self.minsize(540, 640)
 
         self.right_frame = tk.Frame(self)
         self.left_frame = tk.Frame(self)
@@ -34,7 +36,6 @@ class ChatWindow(tk.Toplevel):
         self.friend_profile_picture_area = tk.Label(self.right_frame, image=self.friend_profile_picture, relief=tk.RIDGE)
 
         self.left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
-        self.left_frame.pack_propagate(0)
         self.scrollbar.pack(side=tk.LEFT, fill=tk.Y)
         self.messages_area.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
         self.messages_area.configure(state='disabled')
@@ -52,18 +53,10 @@ class ChatWindow(tk.Toplevel):
         self.bind_events()
 
     def bind_events(self):
-        self.left_frame.bind('<Configure>', self.on_window_resized)
-
         self.bind("<Return>", self.send_message)
         self.text_area.bind("<Return>", self.send_message)
 
         self.text_area.bind('<Control-s>', self.smilie_chooser)
-
-    def on_window_resized(self, event):
-        if not self.left_frame.cget('width') == event.width - 2000:
-            self.left_frame.configure(width=event.width - 2000)
-
-        return "break"
 
     def send_message(self, event=None):
         message = self.text_area.get(1.0, tk.END)
@@ -99,20 +92,37 @@ class ChatWindow(tk.Toplevel):
         smilie_index = self.text_area.index(self.text_area.image_create(tk.END, image=smilie))
         self.text_area.smilies.append((smilie_index, smilie))
 
-    def receive_message(self, message):
+    def receive_message(self, message, smilies):
+        """
+        Writes message into messages_area
+        :param message: message text
+        :param smilies: list of tuples of (char_index, smilie_file), where char_index is the x index of the smilie's location
+                        and smilie_file is the file name only (no path)
+        :return: None
+        """
         self.messages_area.configure(state='normal')
         self.messages_area.insert(tk.END, message)
+
+        if len(smilies):
+            last_line_no = self.messages_area.index(tk.END)
+            last_line_no = str(last_line_no).split('.')[0]
+            last_line_no = str(int(last_line_no) - 2)
+
+            for index, file in smilies:
+                smilie_path = os.path.join(SmilieSelect.smilies_dir, file)
+                image = tk.PhotoImage(file=smilie_path)
+                smilie_index = last_line_no + '.' + index
+                self.messages_area.image_create(smilie_index, image=image)
+
         self.messages_area.configure(state='disabled')
 
     def configure_styles(self):
         style = ttk.Style()
-        style.configure("me.TLabel", background='#efefef', foreground="black", padding=15)
-        style.configure("friend.TLabel", background='#ff6600', foreground="black", padding=15)
         style.configure("send.TButton", background='#dddddd', foreground="black", padding=16)
 
 
 if __name__ == '__main__':
     w = tk.Tk()
-    c = ChatWindow(w, 'b', 'images/avatar.png')
+    c = ChatWindow(w, 'friend', 'images/avatar.png')
     c.protocol("WM_DELETE_WINDOW", w.destroy)
     w.mainloop()

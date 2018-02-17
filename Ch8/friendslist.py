@@ -64,7 +64,7 @@ class FriendsList(tk.Tk):
         friend_frame.pack(fill=tk.X, expand=1)
 
     def add_friend(self):
-        pass
+        self.load_friends()
 
     def open_chat_window(self):
         cw = ChatWindow(self, 'Jaden Corebyn', 'images/avatar.png')
