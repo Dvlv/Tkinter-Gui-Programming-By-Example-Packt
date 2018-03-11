@@ -1,7 +1,4 @@
 import random
-from collections import namedtuple
-
-# Card = namedtuple("Card", "suit value")
 
 
 class Card:
@@ -96,9 +93,12 @@ class Game:
             has_won = False
 
             while not has_won:
-                has_won = self.check_for_blackjack()
-                if has_won:
+                player_has_blackjack, dealer_has_blackjack = self.check_for_blackjack()
+                if player_has_blackjack or dealer_has_blackjack:
+                    has_won = True
+                    self.show_blackjack_results(player_has_blackjack, dealer_has_blackjack)
                     continue
+
                 choice = input("Please choose [Hit / Stick] ").lower()
                 while choice not in ["h", "s", "hit", "stick"]:
                     choice = input("Please enter 'hit' or 'stick' (or H/S) ").lower()
@@ -109,9 +109,9 @@ class Game:
                         print("You have lost!")
                         has_won = True
                 else:
-					player_hand_value = self.player_hand.get_value()
-					dealer_hand_value = self.dealer_hand.get_value()
-					
+                    player_hand_value = self.player_hand.get_value()
+                    dealer_hand_value = self.dealer_hand.get_value()
+
                     print("Final Results")
                     print("Your hand:", player_hand_value)
                     print("Dealer's hand:", dealer_hand_value)
@@ -119,7 +119,7 @@ class Game:
                     if player_hand_value > dealer_hand_value:
                         print("You Win!")
                     elif player_hand_value == dealer_hand_value:
-						print("Tie!")
+                        print("Tie!")
                     else:
                         print("Dealer Wins!")
                     has_won = True
@@ -144,19 +144,17 @@ class Game:
         if self.dealer_hand.get_value() == 21:
             dealer = True
 
-        if player and dealer:
+        return player, dealer
+
+    def show_blackjack_results(self, player_has_blackjack, dealer_has_blackjack):
+        if player_has_blackjack and dealer_has_blackjack:
             print("Both players have blackjack! Draw!")
-            return True
-        elif player:
+
+        elif player_has_blackjack:
             print("You have blackjack! You win!")
-            return True
-        elif dealer:
+
+        elif dealer_has_blackjack:
             print("Dealer has blackjack! Dealer wins!")
-            return True
-
-        return False
-
-
 
 
 if __name__ == "__main__":
