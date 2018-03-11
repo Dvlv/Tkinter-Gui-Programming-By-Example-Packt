@@ -53,12 +53,6 @@ class Hand:
         self.calculate_value()
         return self.value
 
-    def show(self):
-        if self.dealer:
-            return ["hidden"] + self.cards[1:]
-        else:
-            return self.cards
-
     def display(self):
         if self.dealer:
             print("hidden")
@@ -90,12 +84,12 @@ class Game:
             print("Dealer's hand is:")
             self.dealer_hand.display()
 
-            has_won = False
+            game_over = False
 
-            while not has_won:
+            while not game_over:
                 player_has_blackjack, dealer_has_blackjack = self.check_for_blackjack()
                 if player_has_blackjack or dealer_has_blackjack:
-                    has_won = True
+                    game_over = True
                     self.show_blackjack_results(player_has_blackjack, dealer_has_blackjack)
                     continue
 
@@ -107,7 +101,7 @@ class Game:
                     self.player_hand.display()
                     if self.player_is_over():
                         print("You have lost!")
-                        has_won = True
+                        game_over = True
                 else:
                     player_hand_value = self.player_hand.get_value()
                     dealer_hand_value = self.dealer_hand.get_value()
@@ -122,7 +116,7 @@ class Game:
                         print("Tie!")
                     else:
                         print("Dealer Wins!")
-                    has_won = True
+                    game_over = True
             
             again = input("Play Again? [Y/N] ")
             while again.lower() not in ["y", "n"]:
@@ -131,7 +125,7 @@ class Game:
                 print("Thanks for playing!")
                 playing = False
             else:
-                has_won = False
+                game_over = False
 
     def player_is_over(self):
         return self.player_hand.get_value() > 21
