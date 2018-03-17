@@ -70,7 +70,6 @@ def user_exists():
 @app.route("/create_conversation_db", methods=["POST"])
 def create_conversation_db():
     conversation_db_path = get_conversation_db_path_for_users(request.form)
-    print(conversations_dir)
 
     if not os.path.exists(conversation_db_path):
         with open(conversation_db_path, 'w') as f:
@@ -111,20 +110,84 @@ def send_message(username):
     })
 
 
-@app.route("/add_friend", methods=["POST"])
-def add_contact():
+@app.route("/update_avatar/<username>", methods=["POST"])
+def update_avatar(username):
+    img_b64 = request.form.get("img_b64")
+    database.update_avatar(username, img_b64)
+
+    return jsonify({
+        "success": True
+    })
+
+
+@app.route("/get_user_avatar/<username>")
+def get_avatar(username):
+
+    avatar_b64 = database.get_user_avatar(username)['avatar']
+
+    return jsonify({
+        "avatar": avatar_b64
+    })
+
+
+@app.route("/get_new_messages", methods=["POST"])
+def get_new_messages():
     data = request.form
-    username = data['username']
+    conversation_db_path = get_conversation_db_path_for_users(data)
+    conversation_db = Conversation(conversation_db_path)
+
+    timestamp = data["timestamp"]
+    requester_username = data["user_one"]
+
+    new_messages = conversation_db.get_new_messages(timestamp, requester_username)
+
+    return jsonify({
+        "messages": new_messages
+    })
 
 
-@app.route("/block_user/<username>")
-def block_contact(username):
-    pass
+@app.route("/add_friend", methods=["POST"])
+def add_friend():
+    data = request.form
+    user_one = data['user_one']
+    user_two = data['user_two']
+
+    if database.user_exists(user_two) and database.user_exists(user_one):
+        database.add_friend(user_one, user_two)
+        success = True
+    else:
+        success = False
+
+    return jsonify({
+        "success": success
+    })
 
 
-@app.route("/unblock_user/<username>")
-def unblock_contact(username):
-    pass
+@app.route("/block_friend", methods=["POST"])
+def block_friend():
+    data = request.form
+    user_one = data['user_one']
+    user_two = data['user_two']
+
+    database.block_friend(user_one, user_two)
+
+    return jsonify({
+        "success": True
+    })
+
+
+@app.route("/get_friends/<username>")
+def get_friends(username):
+    friends = database.get_friends(username)
+
+    if len(friends):
+        all_friends = database.get_users_by_usernames(friends)
+    else:
+        all_friends = []
+
+    return jsonify({
+        "friends": all_friends
+    })
 
 
 def get_conversation_db_path_for_users(data):

@@ -4,6 +4,7 @@ import os
 import tkinter as tk
 import tkinter.ttk as ttk
 
+from listeningthread import ListeningThread
 from smilieselect import SmilieSelect
 
 
@@ -55,6 +56,9 @@ class ChatWindow(tk.Toplevel):
         self.configure_styles()
         self.bind_events()
         self.load_history()
+        self.protocol("WM_DELETE_WINDOW", self.close)
+        self.listening_thread = None
+        self.listen()
 
     def bind_events(self):
         self.bind("<Return>", self.send_message)
@@ -68,6 +72,18 @@ class ChatWindow(tk.Toplevel):
         if len(history['history']):
             for message in history['history']:
                 self.receive_message(message['author'], message['message'])
+
+    def listen(self):
+        self.listening_thread = ListeningThread(self, self.master.username, self.friend_username)
+        self.listening_thread.start()
+
+    def close(self):
+        if hasattr(self, "listening_thread"):
+            self.listening_thread.running = False
+            self.after(100, self.close)
+        else:
+            self.destroy()
+
 
     def send_message(self, event=None):
         message = self.text_area.get(1.0, tk.END)
