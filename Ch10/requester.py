@@ -91,6 +91,7 @@ class Requester:
         return True
 
     def get_new_messages(self, timestamp, user_one, user_two):
+        """ user_one is the author's username, and user_two is the friend's """
         endpoint = "/get_new_messages"
         params = {
             "timestamp": timestamp,

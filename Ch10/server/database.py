@@ -46,7 +46,7 @@ class Database:
         return False
 
     def update_avatar(self, username, img_b64):
-        sql = "UPDATE users SET avatar=? where username=?"
+        sql = "UPDATE users SET avatar=? WHERE username=?"
         params = (img_b64, username)
 
         return self.perform_insert(sql, params)
@@ -65,11 +65,11 @@ class Database:
 
     def get_friends(self, username):
         all_friends = []
-        sql = "SELECT user_two FROM friends WHERE user_one=? and blocked=0"
+        sql = "SELECT user_two FROM friends WHERE user_one=? AND blocked=0"
         params = (username,)
         friends = self.perform_select(sql, params)
 
-        sql = "select user_one FROM friends WHERE user_two=? and blocked=0"
+        sql = "SELECT user_one FROM friends WHERE user_two=? AND blocked=0"
         friends2 = self.perform_select(sql, params)
 
         for friend in friends:

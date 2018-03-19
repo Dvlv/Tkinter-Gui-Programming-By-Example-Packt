@@ -27,11 +27,11 @@ class FriendsList(tk.Tk):
         self.friends_menu = tk.Menu(self.menu, fg="black", bg="lightgrey", tearoff=0)
         self.friends_menu.add_command(label="Add Friend", command=self.show_add_friend_window)
 
-        self.profile_menu = tk.Menu(self.menu, fg="black", bg="lightgrey", tearoff=0)
-        self.profile_menu.add_command(label="Change Avatar", command=self.change_avatar)
+        self.avatar_menu = tk.Menu(self.menu, fg="black", bg="lightgrey", tearoff=0)
+        self.avatar_menu.add_command(label="Change Avatar", command=self.change_avatar)
 
         self.menu.add_cascade(label="Friends", menu=self.friends_menu)
-        self.menu.add_cascade(label="Profile", menu=self.profile_menu)
+        self.menu.add_cascade(label="Avatar", menu=self.avatar_menu)
 
         self.requester = Requester()
 
