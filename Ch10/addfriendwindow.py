@@ -33,5 +33,6 @@ class AddFriendWindow(tk.Toplevel):
     def add_friend(self):
         username = self.username_entry.get()
 
-        if self.master.add_friend(username):
-            self.username_entry.delete(0, tk.END)
+        if username:
+            if self.master.add_friend(username):
+                self.username_entry.delete(0, tk.END)
