@@ -37,10 +37,10 @@ class MainWindow(tk.Tk):
         self.line_numbers.bind("<Button-5>", lambda e: "break")
 
     def scroll_text(self, *args):
-        try:
+        if len(args) > 1:
             self.text_area.yview_moveto(args[1])
             self.line_numbers.yview_moveto(args[1])
-        except IndexError:
+        else:
             event = args[0]
             if event.delta:
                 move = -1 * (event.delta / 120)
@@ -51,7 +51,7 @@ class MainWindow(tk.Tk):
                     move = -1
 
             self.text_area.yview_scroll(int(move), "units")
-            self.line_numbers.yview_scroll(int(move), "units")
+            self.line_numbers.yview_scroll(int(move) * 3, "units")
 
     def show_find_window(self, event=None):
         FindWindow(self.text_area)
