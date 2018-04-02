@@ -61,7 +61,7 @@ class TextArea(tk.Text):
         if idx:
             self.tag_remove('find_match', 1.0, tk.END)
 
-            end = f'{idx}+{length.get()}c'
+            end = '{}+{}c'.format(idx, length.get())
             self.tag_add('find_match', idx, end)
             self.see(idx)
 
@@ -80,7 +80,7 @@ class TextArea(tk.Text):
         if self.find_match_index:
             current_found_index_line = str(self.find_match_index).split('.')[0]
 
-            end = f"{self.find_match_index}+{len(target)}c"
+            end = "{}+{}c".format(self.find_match_index, len(target))
             self.replace(self.find_match_index, end, replacement)
 
             self.find_search_starting_index = current_found_index_line + '.0'
