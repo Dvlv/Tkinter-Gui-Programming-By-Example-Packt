@@ -284,9 +284,7 @@ class MainWindow(tk.Tk):
         """
         self.change_font()
 
-
-
-if __name__ == '__main__':
+def main():
     mw = MainWindow()
     mw.mainloop()
 
