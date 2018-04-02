@@ -23,3 +23,4 @@ setup(
 		"console_scripts": ["tkedit = texteditor:main"]	
 	}
 )
+ 

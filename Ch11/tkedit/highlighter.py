@@ -58,17 +58,17 @@ class Highlighter:
                         previous_char = self.text_widget.get(previous_char_index, previous_char_index + "+1c")
 
                         if previous_char.isalnum() or previous_char in self.disallowed_previous_chars:
-                            end = "{}+{}c".format(idx, length.get() - 1)
+                            end = f"{idx}+{length.get() - 1}c"
                             start = end
                             idx = self.text_widget.search(keyword, start, stopindex=tk.END, regexp=1)
                         else:
-                            end = "{}+{}c".format(idx, length.get() - 1)
+                            end = f"{idx}+{length.get() - 1}c"
                             self.text_widget.tag_add(category, idx, end)
 
                             start = end
                             idx = self.text_widget.search(keyword, start, stopindex=tk.END, regexp=1)
                     else:
-                        end = "{}+{}c".format(idx, length.get() - 1)
+                        end = f"{idx}+{length.get() - 1}c"
                         self.text_widget.tag_add(category, idx, end)
 
                         start = end
@@ -83,7 +83,7 @@ class Highlighter:
         start = 1.0
         idx = self.text_widget.search(regex, start, stopindex=tk.END, regexp=1, count=length)
         while idx:
-            end = "{}+{}c".format(idx, length.get())
+            end = f"{idx}+{length.get()}c"
             self.text_widget.tag_add(tag, idx, end)
 
             start = end

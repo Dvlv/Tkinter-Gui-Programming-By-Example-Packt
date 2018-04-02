@@ -36,8 +36,8 @@ class FontChooser(tk.Toplevel):
 
     def save(self):
         font_family = self.font_list.get(self.font_list.curselection()[0])
-        yaml_file_contents = "family: {}\n" \
-                           + "size: {}".format(font_family, self.size_input.get())
+        yaml_file_contents = f"family: {font_family}\n" \
+                           + f"size: {self.size_input.get()}"
 
         with open('schemes/font.yaml', 'w') as file:
             file.write(yaml_file_contents)

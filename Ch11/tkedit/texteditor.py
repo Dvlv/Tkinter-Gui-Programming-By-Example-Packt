@@ -288,3 +288,7 @@ def main():
     mw = MainWindow()
     mw.mainloop()
 
+if __name__ == '__main__':
+    mw = MainWindow()
+    mw.mainloop()
+
