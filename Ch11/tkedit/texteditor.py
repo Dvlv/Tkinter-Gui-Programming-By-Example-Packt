@@ -1,6 +1,8 @@
+import os
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.messagebox as msg
+from pathlib import Path
 
 import yaml
 
@@ -26,12 +28,19 @@ class MainWindow(tk.Tk):
         self.text_foreground = 'black'
         self.text_background='white'
 
-        self.load_scheme_file('schemes/default.yaml')
+        self.config_dir = os.path.join(str(Path.home()), '.tkedit')
+
+        self.default_scheme_path = os.path.join(self.config_dir, 'schemes/default.yaml')
+        self.python_language_path = os.path.join(self.config_dir, 'languages/python.yaml')
+        self.font_scheme_path = os.path.join(self.config_dir, 'schemes/font.yaml')
+        self.create_config_directory_if_needed()
+
+        self.load_scheme_file(self.default_scheme_path)
         self.configure_ttk_elements()
 
         self.font_size = 15
         self.font_family = "Ubuntu Mono"
-        self.load_font_file('schemes/font.yaml')
+        self.load_font_file(self.font_scheme_path)
 
         self.text_area = TextArea(self, bg=self.text_background, fg=self.text_foreground, undo=True,
                                   font=(self.font_family, self.font_size))
@@ -40,7 +49,7 @@ class MainWindow(tk.Tk):
         self.text_area.configure(yscrollcommand=self.scrollbar.set)
 
         self.line_numbers = LineNumbers(self, self.text_area, bg="grey", fg="white", width=1)
-        self.highlighter = Highlighter(self.text_area, 'languages/python.yaml')
+        self.highlighter = Highlighter(self.text_area, self.python_language_path)
 
         self.menu = tk.Menu(self, bg=self.background, fg=self.foreground)
         self.all_menus = [self.menu]
@@ -189,8 +198,71 @@ class MainWindow(tk.Tk):
         FontChooser(self)
 
     def update_font(self):
-        self.load_font_file('schemes/font.yaml')
+        self.load_font_file(self.font_scheme_path)
         self.text_area.configure(font=(self.font_family, self.font_size))
+
+    def create_config_directory_if_needed(self):
+        if not os.path.exists(self.config_dir):
+            os.mkdir(self.config_dir)
+            os.mkdir(os.path.join(self.config_dir, 'schemes'))
+            os.mkdir(os.path.join(self.config_dir, 'languages'))
+
+        self.create_default_scheme_if_needed()
+        self.create_font_scheme_if_needed()
+        self.create_python_language_if_needed()
+
+    def create_default_scheme_if_needed(self):
+        if not os.path.exists(self.default_scheme_path):
+            yaml_file_contents = f"background: 'lightgrey'\n" \
+                             + f"foreground: 'black'\n" \
+                             + f"text_background: 'white'\n" \
+                             + f"text_foreground: 'black'\n"
+
+            with open(self.default_scheme_path, 'w') as yaml_file:
+                yaml_file.write(yaml_file_contents)
+
+    def create_font_scheme_if_needed(self):
+        if not os.path.exists(self.font_scheme_path):
+            yaml_file_contents = f"family: Ubuntu Mono\n" \
+                               + f"size: 14"
+
+            with open(self.font_scheme_path, 'w') as yaml_file:
+                yaml_file.write(yaml_file_contents)
+
+    def create_python_language_if_needed(self):
+        if not os.path.exists(self.python_language_path):
+            yaml_file_contents = """
+categories:
+  keywords:
+    colour: orange
+    matches: [for, def, while, from, import, as, with, self]
+
+  variables:
+    colour: red4
+    matches: ['True', 'False', None]
+
+  conditionals:
+    colour: green
+    matches: [try, except, if, else, elif]
+
+  functions:
+    colour: blue4
+    matches: [int, str, dict, list, set, float]
+
+numbers:
+  colour: purple
+
+strings:
+  colour: '#e1218b'
+"""
+            with open(self.python_language_path, 'w') as yaml_file:
+                yaml_file.write(yaml_file_contents)
+
+
+
+
+
+
 
     # =========== Menu Functions ==============
 

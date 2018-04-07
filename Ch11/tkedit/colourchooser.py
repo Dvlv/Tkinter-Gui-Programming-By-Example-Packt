@@ -95,7 +95,6 @@ class ColourChooser(tk.Toplevel):
         save_button = ttk.Button(self, text="save", command=self.save, style="editor.TButton")
         save_button.pack(side=tk.BOTTOM, pady=(0, 20))
 
-
     def set_colour(self, sv):
         choice = askcolor()[1]
         sv.set(choice)
@@ -106,7 +105,7 @@ class ColourChooser(tk.Toplevel):
                              + f"text_background: '{self.chosen_text_background_colour.get()}'\n" \
                              + f"text_foreground: '{self.chosen_text_foreground_colour.get()}'\n"
 
-        with open("schemes/default.yaml", "w") as yaml_file:
+        with open(self.master.default_scheme_path, "w") as yaml_file:
             yaml_file.write(yaml_file_contents)
 
         self.master.apply_colour_scheme(self.chosen_foreground_colour.get(), self.chosen_background_colour.get(),
