@@ -12,6 +12,8 @@ Now the images need to be resized and renamed.
 
 This can be done from a command line using a program named "ImageMagick".
 
+http://www.imagemagick.org/script/index.php
+
 This python script should do it for you:
 
 ```python
