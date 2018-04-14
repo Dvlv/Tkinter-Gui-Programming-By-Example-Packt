@@ -17,7 +17,7 @@ This python script should do it for you:
 ```python
 import os
 
-no = ["tabletop.png", "resize.py", "README.md",]
+no = ["tabletop.png", "resize.py", "README.md", "sounds"]
 
 filename_map = {
     "h": "Hearts",
@@ -45,6 +45,7 @@ for i in images:
             value = value_map[value]
         filename = filename_map[i[0:1]] + str(value) + ".png"
         os.system(f"convert {i} -resize 80x111\> {filename}")
+
 
 ```
 
