@@ -10,7 +10,7 @@ from textarea import TextArea
 from linenumbers import LineNumbers
 from highlighter import Highlighter
 from findwindow import FindWindow
-from colourchooser import ColourChooser
+from colorchooser import colorChooser
 from fontchooser import FontChooser
 
 
@@ -78,7 +78,7 @@ class MainWindow(tk.Tk):
         self.bind('<Control-h>', self.help_about)
 
         self.bind('<Control-m>', self.tools_change_syntax_highlighting)
-        self.bind('<Control-g>', self.tools_change_colour_scheme)
+        self.bind('<Control-g>', self.tools_change_color_scheme)
         self.bind('<Control-l>', self.tools_change_font)
 
         self.line_numbers.bind("<MouseWheel>", lambda e: "break")
@@ -169,10 +169,10 @@ class MainWindow(tk.Tk):
         self.font_family = config['family']
         self.font_size = config['size']
 
-    def change_colour_scheme(self):
-        ColourChooser(self)
+    def change_color_scheme(self):
+        colorChooser(self)
 
-    def apply_colour_scheme(self, foreground, background, text_foreground, text_background):
+    def apply_color_scheme(self, foreground, background, text_foreground, text_background):
         self.text_area.configure(fg=text_foreground, bg=text_background)
         self.background = background
         self.foreground = foreground
@@ -272,11 +272,11 @@ class MainWindow(tk.Tk):
         """
         self.load_syntax_highlighting_file()
 
-    def tools_change_colour_scheme(self, event=None):
+    def tools_change_color_scheme(self, event=None):
         """
         Ctrl+G
         """
-        self.change_colour_scheme()
+        self.change_color_scheme()
 
     def tools_change_font(self, event=None):
         """

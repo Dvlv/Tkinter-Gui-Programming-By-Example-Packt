@@ -1,22 +1,22 @@
 categories:
   keywords:
-    colour: orange
+    color: orange
     matches: [for, def, while, from, import, as, with, self]
 
   variables:
-    colour: red4
+    color: red4
     matches: ['True', 'False', None]
 
   conditionals:
-    colour: green
+    color: green
     matches: [try, except, if, else, elif]
 
   functions:
-    colour: blue4
+    color: blue4
     matches: [int, str, dict, list, set, float]
 
 numbers:
-  colour: purple
+  color: purple
 
 strings:
-  colour: red
+  color: red

@@ -8,7 +8,7 @@ class Highlighter:
         self.text_widget = text_widget
         self.syntax_file = syntax_file
         self.categories = None
-        self.numbers_colour = "blue"
+        self.numbers_color = "blue"
 
         self.disallowed_previous_chars = ["_", "-", "."]
 
@@ -28,18 +28,18 @@ class Highlighter:
                 return
 
         self.categories = config['categories']
-        self.numbers_colour = config['numbers']['colour']
-        self.strings_colour = config['strings']['colour']
+        self.numbers_color = config['numbers']['color']
+        self.strings_color = config['strings']['color']
 
         self.configure_tags()
 
     def configure_tags(self):
         for category in self.categories.keys():
-            colour = self.categories[category]['colour']
-            self.text_widget.tag_configure(category, foreground=colour)
+            color = self.categories[category]['color']
+            self.text_widget.tag_configure(category, foreground=color)
 
-        self.text_widget.tag_configure("number", foreground=self.numbers_colour)
-        self.text_widget.tag_configure("string", foreground=self.strings_colour)
+        self.text_widget.tag_configure("number", foreground=self.numbers_color)
+        self.text_widget.tag_configure("string", foreground=self.strings_color)
 
     def highlight(self, event=None):
         length = tk.IntVar()
